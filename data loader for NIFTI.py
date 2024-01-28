@@ -66,6 +66,8 @@ from tensorflow.keras.layers import Input, SeparableConv2D, Conv2DTranspose, Dro
 from tensorflow.keras.layers import BatchNormalisation, LeakyReLu, Activation, MaxPooling2D, concatenate
 from tensorflow.keras.models import Model
 
+# Need to make a environment on one of the computer in G2 for this code.
+
 # Create a nifti data loader
 def load_nifti_files(directory_image, directory_mask):  # Defines a function named 'load_nifti_files' whuich takes one argument, 'directory', representing the path to the folder containgthe NIFTI files.
     mri_files_image = sorted(glob.glob(os.path.join(directory_image, "ProstateX-*.nii"))) # The file paths are sorted in a list alphabetically. All files in the directory that match the pattern then constructs a file path patten by joininh the directory path with the filename pattern.
