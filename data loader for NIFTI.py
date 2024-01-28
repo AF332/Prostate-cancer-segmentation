@@ -71,16 +71,16 @@ def load_nifti_files(directory_image, directory_mask):  # Defines a function nam
     mri_files_image = sorted(glob.glob(os.path.join(directory_image, "ProstateX-*.nii"))) # The file paths are sorted in a list alphabetically. All files in the directory that match the pattern then constructs a file path patten by joininh the directory path with the filename pattern.
     data_image = [] # Initialising an empty list for the image
 
-    for file in mri_files_image:
-        image = nib.load(file)
-        image_data = image.get_fdata()
-        num_slices = image_data.shape[-1]
+    for file in mri_files_image: # For every file in the folder
+        image = nib.load(file) # The file is loaded
+        image_data = image.get_fdata() # The data from the file is extracted
+        num_slices = image_data.shape[-1] # The number of slices are extracted
 
-        for i in range(num_slices):
+        for i in range(num_slices): 
             slice = image_data[:, :, i]
             data_image.append(slice)
 
-    mri_files_mask = sorted(glob.glob(os.path.join(directory_mask, "ProstateX-*.nii")))
+    mri_files_mask = sorted(glob.glob(os.path.join(directory_mask, "ProstateX-*.nii"))) # Not sure what the last parameter does or how I would need to use it
     data_mask = [] # initialising an empty list for the mask
     
     for file in mri_files_mask:
@@ -93,6 +93,7 @@ def load_nifti_files(directory_image, directory_mask):  # Defines a function nam
             data_mask.append(slice)
     
     return np.array(data_image), np.array(data_mask)
+# Maybe find a way to not repeat the code to extract each file for multiple directories (makes it more efficient and takes less time)
 
 # Changing the dataset into tensorflow dataset
 def get_dataset(data, batch_size = 8):
@@ -103,6 +104,7 @@ def get_dataset(data, batch_size = 8):
     dataset = dataset.shuffle(len(data))
 
     return dataset
+# Not too sure if I need to convert the dataset into a tensorflow dataset
 
 def min_max_normalisation(dataset.shape[0]):
     min_max_images = [] # initialising an empty list
@@ -114,6 +116,8 @@ def min_max_normalisation(dataset.shape[0]):
         min_max_images.append(min_max)
     
     return np.array(min_max_images)
+# Might have to check if this is the best normalisation technique for this dataset and model
+# STILL NEED TO CHECK IF THE FULL DATASET IS LOADED INTO THE NUMPY ARRAY.
 
 directory_image = r"E:\4th Year\Project\NIFTI\Images\T2" # Change the path once on external disk
 directory_mask = r"E:\4th Year\Project\NIFTI\Masks\T2" # Change the path once on external disk
@@ -144,6 +148,8 @@ train_masks = mask_dataset.take(train_size) # Train mask images
 remaining_masks = mask_dataset.skip(train_size)
 val_masks = remaining_masks.take(val_size) # Validation mask images
 test_masks = remaining_masks.skip(val_size) # Test mask images
+# Does the keep the input images in the same order as its corresponding masks
+# Must be a more efficient way to separate the dataset into training validation and testing by code. Too crude.
 
 # Create the convolutional blocks
 def conv_block(inputs = None, n_filters = 90, batch_norm = False, dropout_prob = 0.4):
@@ -172,6 +178,7 @@ def encoder_block(inputs = None, n_filters = 90, batch_norm = True, dropout_prob
 # Create the decoder block
 def decoder_block(expansive_input, skip_con, n_filters, batch_norm = False, dropout_prob = 0.4):
     up_samp = Conv2DTranspose(n_filters, 5, strides = 2, padding = 'same', kernel_initializer = 'HeNormal')(expansive_input)
+    # Not sure what the kernel initialiser does if it's actually needed
     sum = concatenate([up_samp, skip_con], axis = -1)
     convolution = conv_block(sum, n_filters, batch_norm, dropout_prob)
 
@@ -188,5 +195,70 @@ def Unet(input_size = (256, 256, 1), n_filters = 90, n_classes = 2, batch_norm =
     encoder_block_5 = encoder_block(encoder_block_4[0], n_filters * 16, batch_norm, dropout_prob = dropouts[4])
     encoder_block_6 = encoder_block(encoder_block_5, n_filters * 32, batch_norm, dropout_prob = dropouts[5])
 
-    bridge = 
+    bridge = conv_block(encoder_block_6[0], n_filters * 64, batch_norm, dropout_prob = dropouts[6])
+
+    decoder_block_6 = decoder_block(bridge[0], n_filters * 32, batch_norm, dropout_prob = dropouts[7])
+    decoder_block_5 = decoder_block(decoder_block_6[0], n_filters * 16, batch_norm, dropout_prob = dropouts[8])
+    decoder_block_4 = decoder_block(decoder_block_5[0], n_filters * 8, batch_norm, dropout_prob = dropouts[9])
+    decoder_block_3 = decoder_block(decoder_block_4[0], n_filters * 4, batch_norm, dropout_prob = dropouts[10])
+    decoder_block_2 = decoder_block(decoder_block_3[0], n_filters * 2, batch_norm, dropout_prob = dropouts[11])
+    decoder_block_1 = decoder_block(decoder_block_2[0], n_filters, batch_norm, dropout_prob = dropouts[12])
+
+    if n_classes ==2:
+        conv10 = SeparableConv2D(1, 1, padding = 'same')(decoder_block_1)
+        output = Activation('sigmoid')(conv10)
+    else:
+        conv10 = SeparableConv2D(1, 1, padding = 'same')(decoder_block_1)
+        output = Activation('softmax')(conv10)
+    # Not sure if I need the n_classes because the dataset is a binary classification
+
+    model = Model(inputs - inputs, outputs = output, name ='Unet')
+
+    return model
+
+if __name__ == '__main__':
+    model = Unet()
+    print(model.summary())
+
+# Compile model
+model.complile(optimizer = tf.keras.optimizers.Adam(learning_rate = 0.00005),
+                loss = 'mse',
+                metrics = ['mse', 'mae'])
+                # Might need to change the metrics depending on the dataset 
+
+history = model.fit(x = train_images, y = train_masks, batch_size = 32, epochs = 15, verbose = 1, validation_split = 0.2)
+# Not sure what the verbose parameter does
+
+# Fid the outputs of the model based on the test inputs
+result_images = model.predict(test_images)
+
+# Find the loss for the test dataset
+model.evaluate(test_images, test_masks)
+# Should try to apply a gradient descent function to manually calculate the loss. Might be more accurate.
+
+# Visualise the input, target and out
+plt.subplot(2, 3, 1)
+plt.imshow(abs(test_images[17]), cmap = 'gray')
+plt.title('Network Input')
+plt.imshow(abs(result_images[17]), cmap = 'gray')
+plt.title('Network Output')
+plt.imshow(abs(test_masks[17]), cmap = 'gray')
+plt.title('Test Masks')
+plt.imshow(abs(test_images[10]), cmap = 'gray')
+plt.title('Network Input')
+plt.imshow(abs(result_images[10]), cmap = 'gray')
+plt.title('Network Output')
+plt.imshow(abs(test_masks[10]), cmap = 'gray')
+plt.title('Test Masks')
+plt.tight_layout()
+
+# Visualise the loss convergence
+plt.figure()
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('Loss Value')
+plt.ylabel('Loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'validation'], loc = 'uperr left')
+plt.show()
 # For the multi-input U-net model, I need to check if the masks and image are the same dimension using .shape()
