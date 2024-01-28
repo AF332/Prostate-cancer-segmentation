@@ -55,7 +55,8 @@ display_image_slices(img_data)  # Display composite image of slices
 
 # The mask for patient 2 has 2 different findings, what should I do about this?
 # For the first finding slice 10 and 12 had a segmentation while finding 2 had slice 8 and slice 10 with slice 10 segmentation being different from the 1st finding.
-# Mask 3, 5, 12, 21, 23, 28, 31, 33, 35, 37, 38 (has 3), 40 (has 3), 46, 54, 57, 65, 67 (has 3), 68 (has 3), 70, 83, 84, 85 (has 4), 86, 87, 88, 95, 99, 100, 101, 103, 104, 106, 108, 109, 110, 114, 117, 118, 120, 121, 122, 126, 128, 130, 134, 135, 136, 139 (has 3), 140, 141 (has 3), 142 (has 3), 144, 147, 148, 149, 150, 151, 153, 157, 159, 161 (has 3), 163, 170, 171 (has 3), 173, 175, 177 (has 3), 179, 184, 186, 187 (has 3), 189 (has 3), 190, 192, 193 (has 4), 196 (has 3), 199, 200, 202, 203 
+# Mask 3, 5, 12, 21, 23, 28, 31, 33, 35, 37, 38 (has 3), 40 (has 3), 46, 54, 57, 65, 67 (has 3), 68 (has 3), 70, 83, 84, 85 (has 4), 86, 87, 88, 95, 99, 100, 101, 103, 104, 106, 108, 109, 110, 114, 117, 118, 120, 121, 122, 126, 128, 130, 134, 135, 136, 139 (has 3), 140, 141 (has 3), 142 (has 3), 144, 147, 148, 149, 150, 151, 153, 157, 159, 161 (has 3), 163, 170, 171 (has 3), 173, 175, 177 (has 3), 179, 184, 186, 187 (has 3), 189 (has 3), 190, 192, 193 (has 4), 196 (has 3), 199, 200, 202, 203
+# I NEED TO GO THROUGH THE MASKS AND GET RID OF THE DEPLICATED MASKS AND MAKE SURE THAT EACH PATIENT HAS A CORRESPONDING MASK 
 
 import os
 import glob
