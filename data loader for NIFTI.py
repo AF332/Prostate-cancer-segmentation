@@ -71,7 +71,7 @@ from tensorflow.keras.models import Model
 
 # Create a nifti data loader
 def load_nifti_files(directory_image, directory_mask):  # Defines a function named 'load_nifti_files' whuich takes one argument, 'directory', representing the path to the folder containgthe NIFTI files.
-    mri_files_image = sorted(glob.glob(os.path.join(directory_image, "ProstateX-*.nii"))) # The file paths are sorted in a list alphabetically. All files in the directory that match the pattern then constructs a file path patten by joininh the directory path with the filename pattern.
+    mri_files_image = sorted(glob.glob(os.path.join(directory_image, "*.nii"))) # The file paths are sorted in a list alphabetically. All files in the directory that match the pattern then constructs a file path patten by joininh the directory path with the filename pattern.
     data_image = [] # Initialising an empty list for the image
 
     for file in mri_files_image: # For every file in the folder
@@ -83,7 +83,7 @@ def load_nifti_files(directory_image, directory_mask):  # Defines a function nam
             slice = image_data[:, :, i]
             data_image.append(slice)
 
-    mri_files_mask = sorted(glob.glob(os.path.join(directory_mask, "ProstateX-*.nii"))) # Not sure what the last parameter does or how I would need to use it
+    mri_files_mask = sorted(glob.glob(os.path.join(directory_mask, "*-Finding1-t2_tse_tra_ROI.nii.nii"))) # Not sure what the last parameter does or how I would need to use it
     data_mask = [] # initialising an empty list for the mask
     
     for file in mri_files_mask:
@@ -96,7 +96,7 @@ def load_nifti_files(directory_image, directory_mask):  # Defines a function nam
             data_mask.append(slice)
     
     return np.array(data_image), np.array(data_mask)
-# Maybe find a way to not repeat the code to extract each file for multiple directories (makes it more efficient and takes less time)
+# Maybe find a way to not repeat the code to extract each file for multiple directories (makes it more efficient and takes less time) done
 
 # Changing the dataset into tensorflow dataset
 def get_dataset(data, batch_size = 8):
@@ -104,7 +104,7 @@ def get_dataset(data, batch_size = 8):
     dataset = dataset.map(lambda x: tf.expand_dims(x, axis = -1))
     dataset = dataset.map(lambda x: tf.cast(x, tf.float32))
     dataset = dataset.batch(batch_size)
-    dataset = dataset.shuffle(len(data))
+    dataset = dataset.shuffle(len(data)) # Don't need this
 
     return dataset
 # Not too sure if I need to convert the dataset into a tensorflow dataset
@@ -119,7 +119,7 @@ def min_max_normalisation(dataset.shape[0]):
         min_max_images.append(min_max)
     
     return np.array(min_max_images)
-# Might have to check if this is the best normalisation technique for this dataset and model
+# Might have to check if this is the best normalisation technique for this dataset and model done
 # STILL NEED TO CHECK IF THE FULL DATASET IS LOADED INTO THE NUMPY ARRAY.
 
 directory_image = r"E:\4th Year\Project\NIFTI\Images\T2" # Change the path once on external disk
@@ -151,12 +151,12 @@ train_masks = mask_dataset.take(train_size) # Train mask images
 remaining_masks = mask_dataset.skip(train_size)
 val_masks = remaining_masks.take(val_size) # Validation mask images
 test_masks = remaining_masks.skip(val_size) # Test mask images
-# Does the keep the input images in the same order as its corresponding masks
+# Does the keep the input images in the same order as its corresponding masks - done
 # Must be a more efficient way to separate the dataset into training validation and testing by code. Too crude.
 
 # Create the convolutional blocks
 def conv_block(inputs = None, n_filters = 90, batch_norm = False, dropout_prob = 0.4):
-    convolutional_1 = SeparableConv2D(n_filters, 2, padding = 'same', kernel_initializer = 'HeNormal')(inputs)
+    convolutional_1 = SeparableConv2D(n_filters, 2, padding = 'same', kernel_initializer = 'HeNormal')(inputs) # Check the HeNormal parameter what it does
     if batch_norm:
         convolutional_1 = BatchNormalisation(axis = 1)(convolutional_1)
     convolutional_1 = LeakyReLu(alpha = 0.2)(convolutional_1)
@@ -227,9 +227,9 @@ if __name__ == '__main__':
 model.complile(optimizer = tf.keras.optimizers.Adam(learning_rate = 0.00005),
                 loss = 'mse',
                 metrics = ['mse', 'mae'])
-                # Might need to change the metrics depending on the dataset 
+                # Might need to change the metrics depending on the dataset. USE DICE
 
-history = model.fit(x = train_images, y = train_masks, batch_size = 32, epochs = 15, verbose = 1, validation_split = 0.2)
+history = model.fit(x = train_images, y = train_masks, batch_size = 32, epochs = 15, verbose = 1) #validation_split = 0.2
 # Not sure what the verbose parameter does
 
 # Fid the outputs of the model based on the test inputs
@@ -237,7 +237,7 @@ result_images = model.predict(test_images)
 
 # Find the loss for the test dataset
 model.evaluate(test_images, test_masks)
-# Should try to apply a gradient descent function to manually calculate the loss. Might be more accurate.
+# Should try to apply a gradient descent function to manually calculate the loss. Might be more accurate. # NOT NEEDED
 
 # Visualise the input, target and out
 plt.subplot(2, 3, 1)
