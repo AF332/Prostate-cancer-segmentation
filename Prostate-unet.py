@@ -60,8 +60,8 @@ def load_nifti_files(directory_image, directory_mask):  # Defines a function nam
 
     return np.array(data_image), np.array(data_mask) # The array forms of the data_image and data_mask are returned.
 
-directory_image = r"/media/ariffaisal/Crucial X9/Images" # Folder path for the input images
-directory_mask = r"/media/ariffaisal/Crucial X9/Masks" # Folder path for the corresponding masks
+directory_image = r"/media/ariffaisal/Crucial X9/Images/T2" # Folder path for the input images
+directory_mask = r"/media/ariffaisal/Crucial X9/Masks/T2" # Folder path for the corresponding masks
 
 data_image, data_mask = load_nifti_files(directory_image, directory_mask) # the load_nifti_files function is called with the folders paths provided
 
