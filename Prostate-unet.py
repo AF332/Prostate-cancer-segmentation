@@ -6,6 +6,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import Input, SeparableConv2D, Conv2DTranspose, Dropout
 from tensorflow.keras.layers import (BatchNormalization, LeakyReLU, Activation, MaxPooling2D, concatenate)
 from tensorflow.keras.models import Model
+import keras.backend as K
 
 def process_slice(slice): # A function to process a slice to either crop or pad.
     target_size = (384, 384) # The target spatial dimension of all slices.
@@ -211,13 +212,24 @@ if __name__ == '__main__':
     model = Unet()
     print(model.summary())
 
+def dice_coefficient(y_true, y_pred, smooth=1):
+    y_true_f = tf.cast(tf.reshape(y_true, [-1]), tf.float32)
+    y_pred_f = tf.cast(tf.reshape(y_pred, [-1]), tf.float32)
+    intersection = tf.reduce_sum(y_true_f * y_pred_f)
+
+    return (2. * intersection + smooth) / (tf.reduce_sum(y_true_f) + tf.reduce_sum(y_pred_f) + smooth)
+
+def dice_loss(y_true, y_pred):
+
+    return 1 - dice_coefficient(y_true, y_pred)
+
 # Compile model
-model.compile(optimizer = tf.keras.optimizers.Adam(learning_rate = 0.00005),
-                loss = 'mse',
-                metrics = ['mse', 'mae'])
+model.compile(optimizer = tf.keras.optimizers.Adam(learning_rate = 0.001),
+                loss = dice_loss,
+                metrics = ['accuracy', dice_coefficient])
                 # Might need to change the metrics depending on the dataset. USE DICE
 
-history = model.fit(x = normalised_train_images, y = train_masks, batch_size = 32, epochs = 15, verbose = 1) #validation_split = 0.2
+history = model.fit(x = normalised_train_images, y = train_masks, batch_size = 32, epochs = 7, verbose = 1) #validation_split = 0.2
 # Not sure what the verbose parameter does
 
 # Fid the outputs of the model based on the test inputs
@@ -250,6 +262,8 @@ plt.plot(history.history['val_loss'])
 plt.title('Loss Value')
 plt.ylabel('Loss')
 plt.xlabel('epoch')
-plt.legend(['train', 'validation'], loc = 'uperr left')
+plt.legend(['train', 'validation'], loc = 'upper left')
 plt.show()
-# For the multi-input U-net model, I need to check if the masks and image are the same dimension using .shape()
+# For the multi-input U-net model
+# Maybe think about adding in a learning rate scheduler to adjust the learning rate dynamically.
+# Maybe add an early stopping callback.
