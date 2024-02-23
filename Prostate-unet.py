@@ -3,6 +3,7 @@ import glob
 import nibabel as nib
 import numpy as np
 import tensorflow as tf
+import matplotlib.pyplot as plt
 from tensorflow.keras.layers import Input, SeparableConv2D, Conv2DTranspose, Dropout
 from tensorflow.keras.layers import (BatchNormalization, LeakyReLU, Activation, MaxPooling2D, concatenate)
 from tensorflow.keras.models import Model
@@ -143,6 +144,7 @@ print("Norm test images dtype:", normalised_test_images.dtype) # Print out the d
 print("Test masks shape:", test_masks.shape) # Print the data_mask shape to see how many masks we have
 print("Test masks dtype:", test_masks.dtype) # Print out the data_mask item types
 
+
 # Create the convolutional blocks
 def conv_block(inputs = None, n_filters = 90, batch_norm = False, dropout_prob = 0.4):
     convolutional_1 = SeparableConv2D(n_filters, 2, padding = 'same', kernel_initializer = 'HeNormal')(inputs) # Check the HeNormal parameter what it does
@@ -199,12 +201,16 @@ def Unet(input_size = (384, 384, 1), n_filters = 90, n_classes = 2, batch_norm =
     if n_classes ==2:
         conv10 = SeparableConv2D(1, 1, padding = 'same')(decoder_block_1)
         output = Activation('sigmoid')(conv10)
+        threshold_value = 0.5
+        binary_output = tf.where(output > threshold_value, 1, 0)
     else:
         conv10 = SeparableConv2D(1, 1, padding = 'same')(decoder_block_1)
         output = Activation('softmax')(conv10)
+        threshold_value = 0.5
+        binary_output = tf.where(output > threshold_value, 1, 0)
     # Not sure if I need the n_classes because the dataset is a binary classification
 
-    model = Model(inputs = inputs, outputs = output, name ='Unet')
+    model = Model(inputs = inputs, outputs = binary_output, name ='Unet')
 
     return model
 
@@ -229,7 +235,7 @@ model.compile(optimizer = tf.keras.optimizers.Adam(learning_rate = 0.001),
                 metrics = ['accuracy', dice_coefficient])
                 # Might need to change the metrics depending on the dataset. USE DICE
 
-history = model.fit(x = normalised_train_images, y = train_masks, batch_size = 32, epochs = 7, verbose = 1) #validation_split = 0.2
+history = model.fit(x = normalised_train_images, y = train_masks, batch_size = 32, epochs = 1, verbose = 1, validation_data = (normalised_val_images, validation_masks)) #validation_split = 0.2
 # Not sure what the verbose parameter does
 
 # Fid the outputs of the model based on the test inputs
@@ -243,14 +249,19 @@ model.evaluate(normalised_test_images, test_masks)
 plt.subplot(2, 3, 1)
 plt.imshow(abs(normalised_test_images[17]), cmap = 'gray')
 plt.title('Network Input')
+plt.subplot(2, 3, 2)
 plt.imshow(abs(result_images[17]), cmap = 'gray')
 plt.title('Network Output')
+plt.subplot(2, 3, 3)
 plt.imshow(abs(test_masks[17]), cmap = 'gray')
 plt.title('Test Masks')
+plt.subplot(2, 3, 4)
 plt.imshow(abs(normalised_test_images[10]), cmap = 'gray')
 plt.title('Network Input')
+plt.subplot(2, 3, 5)
 plt.imshow(abs(result_images[10]), cmap = 'gray')
 plt.title('Network Output')
+plt.subplot(2, 3, 6)
 plt.imshow(abs(test_masks[10]), cmap = 'gray')
 plt.title('Test Masks')
 plt.tight_layout()
