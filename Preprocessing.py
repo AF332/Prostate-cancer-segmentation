@@ -2,9 +2,7 @@ import os
 import glob
 import nibabel as nib
 import numpy as np
-import tensorflow as tf
-
-"""Need to make a environment on one of the computer in G2 for this code."""
+import matplotlib.pyplot as plt
 
 def process_slice(slice): # A function to process a slice to either crop or pad.
     target_size = (384, 384) # The target spatial dimension of all slices.
@@ -64,7 +62,7 @@ directory_mask = r"F:\Masks\T2" # Folder path for the corresponding masks
 
 data_image, data_mask = load_nifti_files(directory_image, directory_mask) # the load_nifti_files function is called with the folders paths provided
 
-def split_dataset(data_image, data_mask, train_ratio = 0.7, validation_ratio = 0.2, test_ratio = 0.1): # A dataset splitting function that takes 2 lists, and splits it to training (0.7), val (0.2), and testing (0.1)
+def split_dataset(data_image, data_mask, train_ratio = 0.7, validation_ratio = 0.2): # A dataset splitting function that takes 2 lists, and splits it to training (0.7), val (0.2), and testing (0.1)
     assert isinstance(data_image, np.ndarray) and isinstance(data_mask, np.ndarray) ## Ensure that data_image and data_mask are NumPy arrays
     paired_data = np.stack((data_image, data_mask), axis=1) ## Stack images and masks together along a new axis to keep each image paired with its corresponding mask
     np.random.shuffle(paired_data) ## Shuffle the paired data along the first axis
@@ -94,7 +92,6 @@ def min_max_normalisation(dataset): # Min, max normalisation function that takes
 
     for i in range(num_slices): # Iterates through the number of slices present.
         image = dataset[i] # Specifies on one slice.
-        #print(i)
         min = np.min(image) # Calculates the minimum value of the slice.
         max = np.max(image) # Calculates the maximum value of the slice.
         min_max = (image - min) / (max - min) # Calculates the the min_max_normalisation pixel values of the slice.
@@ -103,11 +100,8 @@ def min_max_normalisation(dataset): # Min, max normalisation function that takes
     return np.array(min_max_images) # Returns the list in a numpy array.
 
 normalised_train_images = min_max_normalisation(train_images) # Applies the min_max_normalisation to the train_images.
-#normalised_train_masks = min_max_normalisation(train_masks)
 normalised_val_images = min_max_normalisation(validation_images) # Applies the min_max_normalisation to the validation_images.
-#normalised_val_masks = min_max_normalisation(validation_masks)
 normalised_test_images = min_max_normalisation(test_images) # Applies the min_max_normalisation to the test_images.
-#normalised_test_masks = min_max_normalisation(test_masks)
 
 def identify_problematic_slices(data_image): # Problematic slices function that takes in data_image as the argument.
     
@@ -122,11 +116,8 @@ def identify_problematic_slices(data_image): # Problematic slices function that 
     return problematic_slices # Return the list.
 
 problematic_slices_train_images = identify_problematic_slices(train_images) # Call the problematic slices function for the train_images
-#problematic_slices_train_masks = identify_problematic_slices(train_masks)
 problematic_slices_val_images = identify_problematic_slices(validation_images) # Call the problematic slices function for the validation_images.
-#problematic_slices_val_masks = identify_problematic_slices(validation_masks)
 problematic_slices_test_images = identify_problematic_slices(test_images) # Call the problematic slices function for the test_images.
-#problematic_slices_test_masks = identify_problematic_slices(test_masks)
 
 print("Norm train images shape:", normalised_train_images.shape) # Print the data_image shape to see how many images we have
 print("Norm train images dtype:", normalised_train_images.dtype) # Print out data_image item types
@@ -140,3 +131,36 @@ print("Norm test images shape:", normalised_test_images.shape) # Print the data_
 print("Norm test images dtype:", normalised_test_images.dtype) # Print out the data_mask item types
 print("Test masks shape:", test_masks.shape) # Print the data_mask shape to see how many masks we have
 print("Test masks dtype:", test_masks.dtype) # Print out the data_mask item types
+print("Test masks max pixel value:", test_masks.max())
+print("Test masks min pixel value:", test_masks.min())
+print("Validation masks max pixel value:", validation_masks.max())
+print("Validation masks min pixel value:", validation_masks.min())
+print("Train masks max pixel value:", train_masks.max())
+print("Train masks min pixel value:", train_masks.min())
+print("Test images max pixel value:", normalised_test_images.max())
+print("Test images min pixel value:", normalised_test_images.min())
+print("Validation images max pixel value:", normalised_val_images.max())
+print("Validation images min pixel value:", normalised_val_images.min())
+print("Train images max pixel value:", normalised_train_images.max())
+print("Train images min pixel value:", normalised_train_images.min())
+
+plt.subplot(2, 3, 1)
+plt.imshow((test_masks[1]), cmap = 'gray')
+plt.title('Test Masks')
+plt.subplot(2, 3, 2)
+plt.imshow((test_masks[25]), cmap = 'gray')
+plt.title('Test Masks')
+plt.subplot(2, 3, 3)
+plt.imshow((test_masks[30]), cmap = 'gray')
+plt.title('Test Masks')
+plt.subplot(2, 3, 4)
+plt.imshow((test_masks[50]), cmap = 'gray')
+plt.title('Test Masks')
+plt.subplot(2, 3, 5)
+plt.imshow((test_masks[60]), cmap = 'gray')
+plt.title('Test Masks')
+plt.subplot(2, 3, 6)
+plt.imshow((test_masks[10]), cmap = 'gray')
+plt.title('Test Masks')
+plt.tight_layout()
+plt.show()
