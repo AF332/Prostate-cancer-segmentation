@@ -10,12 +10,12 @@ sheet_overview = {sheet_name: data[sheet_name].head() for sheet_name in data.key
 print(sheet_overview)
 
 # Extract data from 'Model 1' sheet
-model_1_data = data['Model 6']
+model_1_data = data['Best Model']
 
 # Create a scatter plot with Plotly
-fig = px.line(model_1_data, x='Threshold Value', y='Binary Cross-Entropy', title='Threshold vs Binary Cross-Entropy Loss for Model 6',
-                 labels={"Threshold": "Threshold", "Binary Cross-Entropy": "Binary Cross-Entropy"},
+fig = px.line(model_1_data, x='Threshold Value', y='IoU Score', title='Threshold vs IoU Score for Model 6',
+                 labels={"Threshold": "Threshold", "IoU Score": "IoU Score"},
                  markers=True,
                  template="plotly_white")
 fig.show()
-fig.write_image("Threshold_vs_Binary_Cross-Entropy_Loss.png")
+fig.write_image("Threshold_vs_IoU_Score.png")
