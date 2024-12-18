@@ -1,5 +1,5 @@
 # Prostate-cancer-segmentation
-
+---
 Overview
 
 This GitHub repository contains the Prostate Cancer Segmentation project, which leverages deep learning to accurately segment prostate cancer from MRI scans. The project utilises a U-Net deep learning model to analyse medical images and corresponding masks stored in the NIfTI format. The repository includes scripts for preprocessing images, training the U-Net model, and evaluating its performance.
